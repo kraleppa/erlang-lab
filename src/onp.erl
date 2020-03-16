@@ -29,5 +29,7 @@ calculate(["sqrt" | T1], [X | T2]) -> calculate(T1, [math:sqrt(X) | T2]);
 calculate(["pow" | T1], [X, Y | T2]) -> calculate(T1, [math:pow(Y, X) | T2]);
 calculate(["sin" | T1], [X | T2]) -> calculate(T1, [math:sin(X) | T2]);
 calculate(["cos" | T1], [X | T2]) -> calculate(T1, [math:cos(X) | T2]);
+calculate(["double" | T1], [X | T2]) -> calculate(T1, [X * 2 | T2]);
+calculate(["pit" | T1], [X, Y | T2]) -> calculate(T1, [math:pow(X, 2) + math:pow(Y, 2) | T2]);
 calculate([H | T1], Stack) -> calculate(T1, [parse(H) | Stack]).
 

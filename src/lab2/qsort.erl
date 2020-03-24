@@ -26,5 +26,3 @@ compareSpeeds(List, Fun1, Fun2) ->
   {T2, _} = timer:tc(Fun2, [List]),
   io:format("Function1: ~p ms ~nFunction2: ~p ms~n", [T1, T2]),
   {T1, T2}.
-
-Map = fun M(_, []) -> []; M(F, [H | T]) -> [F(H) | M(F, T)] end.

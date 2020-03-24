@@ -1,0 +1,5 @@
+1> Map = fun M(_, []) -> []; M(Fun, [H | T]) -> [Fun(H) | M(Fun, T)] end.
+#Fun<erl_eval.36.99386804>
+2> Map(fun(X) -> X + 2 end, [1,2,3,4]).
+[3,4,5,6]
+

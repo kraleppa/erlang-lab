@@ -1,0 +1,112 @@
+Inicjalizuje monitor:
+
+1> M1 = pollution:createMonitor().
+{monitor,#{},#{}}
+
+
+Tworze stacje pomiarowe:
+
+2> M2 = pollution:addStation("Lublin", {20, 20}, M1).
+{monitor,#{"Lublin" => {20,20}},#{}}
+3> M3 = pollution:addStation("Gdynia", {31, 24}, M2).
+{monitor,#{"Gdynia" => {31,24},"Lublin" => {20,20}},#{}}
+4> M4 = pollution:addStation("Kraków", {21.121, 12}, M3).
+{monitor,#{"Gdynia" => {31,24},
+           "Kraków" => {21.121,12},
+           "Lublin" => {20,20}},
+         #{}}
+
+Następnie stowrzyłem przykładowe dane parokrotnie używając funkcji addValue
+
+18> M16 = pollution:addValue("Gdynia", {2020, 01, 08}, "PM 2.5", 5, M15).
+{monitor,#{"Gdynia" => {31,24},
+           "Kraków" => {21.121,12},
+           "Lublin" => {20,20}},
+         #{{"Gdynia",{2020,1,1},"PM 10"} => 2,
+           {"Gdynia",{2020,1,4},"PM 10"} => 5,
+           {"Gdynia",{2020,1,8},"PM 2.5"} => 5,
+           {"Kraków",{2020,1,4},"PM 10"} => 350,
+           {"Kraków",{2020,1,4},"PM 2,5"} => 190,
+           {"Kraków",{2020,1,8},"PM 2,5"} => 200,
+           {"Lublin",{2020,1,1},"PM 10"} => 30,
+           {"Lublin",{2020,1,1},"PM 2,5"} => 17,
+           {"Lublin",{2020,1,4},"PM 10"} => 55,
+           {"Lublin",{2020,1,4},"PM 2,5"} => 30,
+           {"Lublin",{2020,1,8},"PM 10"} => 65,
+           {"Lublin",{2020,1,8},"PM 2,5"} => 99}}
+
+Poniżej przykład działania removeValue. Jak widać wartośc została usunięta. Obecnie dla Gdyni są 2 pomiary wcześniej były 3
+Jednakże jest to usunięcie pozorne gdyż nie przypisałem nowej mapy do zmiennej więc dalej usunięty pomiar będzie widoczny
+
+19> pollution:removeValue("Gdynia", {2020,01,01}, "PM 10", M16).
+{monitor,#{"Gdynia" => {31,24},
+           "Kraków" => {21.121,12},
+           "Lublin" => {20,20}},
+         #{{"Gdynia",{2020,1,4},"PM 10"} => 5,
+           {"Gdynia",{2020,1,8},"PM 2.5"} => 5,
+           {"Kraków",{2020,1,4},"PM 10"} => 350,
+           {"Kraków",{2020,1,4},"PM 2,5"} => 190,
+           {"Kraków",{2020,1,8},"PM 2,5"} => 200,
+           {"Lublin",{2020,1,1},"PM 10"} => 30,
+           {"Lublin",{2020,1,1},"PM 2,5"} => 17,
+           {"Lublin",{2020,1,4},"PM 10"} => 55,
+           {"Lublin",{2020,1,4},"PM 2,5"} => 30,
+           {"Lublin",{2020,1,8},"PM 10"} => 65,
+           {"Lublin",{2020,1,8},"PM 2,5"} => 99}}
+
+Przykład działania funkcji getOneValue
+
+20> pollution:getOneValue("Kraków", {2020, 1, 4}, "PM 10", M16).
+350
+
+
+
+Przykład działania getStationMean
+W przypadku Lublina i pomiaru PM 10 spodziewana wartość to
+30 + 55 + 65 = 150
+150 / 3 = 50
+
+21> pollution:getStationMean("Lublin", "PM 10", M16).
+50.0
+
+Przykład działa getDailyMean
+Dla pomiaru PM 10 dnia 2020-01-04 spodziewana wartość to
+5 + 350 + 55 = 410
+410 / 3 = 136,(6)
+ponieważ jest to
+
+23> pollution:getDailyMean("PM 10", {2020, 01, 04}, M16).
+136.66666666666666
+
+Przykład działania getDailyOverLimit
+dla pomiaru PM 10 dnia 2020-01-04 z limitem 40 wynik powinien wynieść 2
+
+23> pollution:getDailyOverLimit("PM 10", {2020, 01, 04}, 40, M16).
+2
+
+Następnie przez pomyłkę wyłączyłem intellija i stare dane przepadły
+nowe są dość podobne. Wyglądają następująco:
+{monitor,#{"Gdynia" => {31,24},
+           "Kraków" => {21.121,12},
+           "Lublin" => {20,20}},
+         #{{"Gdynia",{2020,1,1},"PM 10"} => 2,
+           {"Gdynia",{2020,1,4},"PM 10"} => 5,
+           {"Gdynia",{2020,1,8},"PM 2.5"} => 5,
+           {"Kraków",{2020,1,4},"PM 10"} => 350,
+           {"Kraków",{2020,1,4},"PM 2,5"} => 190,
+           {"Kraków",{2020,1,8},"PM 2,5"} => 200,
+           {"Lublin",{2020,1,1},"PM 2,5"} => 17,
+           {"Lublin",{2020,1,4},"PM 10"} => 30,
+           {"Lublin",{2020,1,4},"PM 2,5"} => 30,
+           {"Lublin",{2020,1,8},"PM 10"} => 65,
+           {"Lublin",{2020,1,8},"PM 2,5"} => 99}}
+
+
+Przykład działania getYearlyMean dla pomiaru PM 10 roku 2020
+Oczkekiwany wynik
+2 + 5 + 350 + 30 + 65 = 452
+452 / 5 = 90.4
+
+24> pollution:getYearlyMean("PM 10", 2020, M16).
+90.4
+

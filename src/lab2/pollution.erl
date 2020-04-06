@@ -10,7 +10,7 @@
 -author("krzysztof").
 
 %% API
--export([createMonitor/0, addStation/3, addValue/5, removeValue/4, getOneValue/4, getStationMean/3, getDailyMean/3, getDailyOverLimit/4, getYearlyMean/3]).
+-export([createMonitor/0, addStation/3, addValue/5, removeValue/4, getOneValue/4, getStationMean/3, getDailyMean/3, getDailyOverLimit/4, getYearlyMean/3, getStationByCords/2]).
 
 -record(monitor, {stations, data}).
 
@@ -34,25 +34,54 @@ valueExists(Tuple, Monitor) ->
   Map = maps:filter(fun(Key, _) -> Key == Tuple end, Monitor#monitor.data),
   maps:size(Map) /= 0.
 
+
+getStationByCords(Tuple, Monitor) when is_tuple(Tuple) and is_record(Monitor, monitor) ->
+  Map = maps:filter(fun(_, Cords) -> Cords == Tuple end, Monitor#monitor.stations),
+  List = maps:keys(Map),
+  case length(List) of
+    1 -> [Head | _] = List, Head;
+    _ -> null
+  end.
+
+
 %% dodaje pomiar
+addValue(Tuple, Date, Type, Value, Monitor) when is_tuple(Tuple) and is_list(Type) and is_number(Value) and is_record(Monitor, monitor)->
+  Name = getStationByCords(Tuple, Monitor),
+  addValue(Name, Date, Type, Value, Monitor);
+
 addValue(Name, Date, Type, Value, Monitor) when is_list(Name) and is_list(Type) and is_number(Value) and is_record(Monitor, monitor)->
   case calendar:valid_date(Date) and not valueExists({Name, Date, Type}, Monitor) of
     true -> #monitor{stations = Monitor#monitor.stations, data = maps:put({Name, Date, Type}, Value, Monitor#monitor.data)};
     _ -> Monitor
   end.
 
+
 %% ususwa pomiar
+removeValue(Tuple, Date, Type, Monitor) when is_tuple(Tuple) and is_list(Type) and is_record(Monitor, monitor) ->
+  Name = getStationByCords(Tuple, Monitor),
+  removeValue(Name, Date, Type, Monitor);
+
 removeValue(Name, Date, Type, Monitor) when is_list(Name) and is_list(Type) and is_record(Monitor, monitor) ->
   #monitor{stations = (Monitor#monitor.stations), data = maps:remove({Name, Date, Type}, Monitor#monitor.data)}.
 
+
 %% pobiera wartosc pomiaru
+getOneValue(Tuple, Date, Type, Monitor) when is_tuple(Tuple) and is_list(Type) and is_record(Monitor, monitor) ->
+  Name = getStationByCords(Tuple, Monitor),
+  getOneValue(Name, Date, Type, Monitor);
+
 getOneValue(Name, Date, Type, Monitor) when is_list(Name) and is_list(Type) and is_record(Monitor, monitor) ->
   case valueExists({Name, Date, Type}, Monitor) of
     true -> maps:get({Name, Date, Type}, Monitor#monitor.data);
     _ -> null
   end.
 
+
 %% pobiera srednia wartosc danego pomiaru na stacji
+getStationMean(Tuple, Type, Monitor) when is_tuple(Tuple) and is_list(Type) ->
+  Name = getStationByCords(Tuple, Monitor),
+  getStationMean(Name, Type, Monitor);
+
 getStationMean(Name, Type, Monitor) when is_list(Name) and is_list(Type) ->
   F = fun({KeyName, _, KeyType}, _) -> (Name == KeyName) and (Type == KeyType) end,
   Map = maps:filter(F, (Monitor#monitor.data)),

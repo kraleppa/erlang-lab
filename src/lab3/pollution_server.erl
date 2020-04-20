@@ -28,10 +28,28 @@ call(Message) ->
 
 loop(Monitor) ->
   receive
-    {addStation, PID, {Name, Cords}} -> PID ! {reply, ok}, loop(addStation(Name, Cords, Monitor));
-    {addValue, PID, {Station, Date, Type, Value}} -> PID ! {reply, ok}, loop(addValue(Station, Date, Type, Value, Monitor));
+    {addStation, PID, {Name, Cords}} ->
+      OperationResult = addStation(Name, Cords, Monitor),
+      case OperationResult of
+        {error, Text} -> PID ! {error, Text}, loop(Monitor);
+        _ -> PID ! {reply, ok}, loop(OperationResult)
+      end;
+
+    {addValue, PID, {Station, Date, Type, Value}} ->
+      OperationResult = addValue(Station, Date, Type, Value, Monitor),
+      case OperationResult of
+        {error, Text} -> PID ! {error, Text}, loop(Monitor);
+        _ -> PID ! {reply, ok}, loop(OperationResult)
+      end;
+
+    {removeValue, PID, {Station, Date, Type}} ->
+      OperationResult = removeValue(Station, Date, Type, Monitor),
+      case OperationResult of
+        {error, Text} -> PID ! {error, Text}, loop(Monitor);
+        _ -> PID ! {reply, ok}, loop(OperationResult)
+      end;
+
     {show, PID} -> PID ! {reply, Monitor}, loop(Monitor);
-    {removeValue, PID, {Station, Date, Type}} -> PID ! {reply, ok}, loop(removeValue(Station, Date, Type, Monitor));
     {getOneValue, PID, {Station, Date, Type}} -> PID ! {reply, getOneValue(Station, Date, Type, Monitor)}, loop(Monitor);
     {getStationMean, PID, {Station, Type}} -> PID !  {reply, getStationMean(Station, Type, Monitor)}, loop(Monitor);
     {getDailyMean, PID, {Type, Date}} -> PID ! {reply, getDailyMean(Type, Date, Monitor)}, loop(Monitor);
@@ -40,7 +58,6 @@ loop(Monitor) ->
     {stop, PID} -> PID ! {reply, ok};
     _ -> loop(Monitor)
   end.
-
 
 addStation(Name, Cords) -> call({addStation, self(), {Name, Cords}}).
 addValue(Station, Date, Type, Value) -> call({addValue, self(), {Station, Date, Type, Value}}).

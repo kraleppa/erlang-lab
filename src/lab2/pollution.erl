@@ -18,15 +18,16 @@
 createMonitor() -> #monitor{stations = #{}, data = #{}}.
 
 %% sprawdza czy dana stacja istnieje
-stationExists(Name, Monitor) ->
-  Map = maps:filter(fun(Station, _) -> Station == Name end, Monitor#monitor.stations),
-  maps:size(Map) /= 0.
+stationExists(Name, Cords, Monitor) ->
+  Map1 = maps:filter(fun(Station, _) -> Station == Name end, Monitor#monitor.stations),
+  Map2 = maps:filter(fun(_, KeyCords) -> KeyCords == Cords end, Monitor#monitor.stations),
+  (maps:size(Map1) /= 0) or (map_size(Map2) /= 0).
 
 %% dodaje stacje
 addStation(Name, {X, Y}, Monitor) when is_list(Name) and is_number(X) and is_number(Y) and is_record(Monitor, monitor)->
-  case stationExists(Name, Monitor) of
+  case stationExists(Name, {X, Y}, Monitor) of
     false -> #monitor{stations = maps:put(Name, {X, Y}, Monitor#monitor.stations), data = Monitor#monitor.data};
-    _ -> Monitor
+    _ -> {error, "Station already exists"}
   end.
 
 %% sprawdza czy dany pomiar zostal juz zapisany
@@ -52,7 +53,7 @@ addValue(Tuple, Date, Type, Value, Monitor) when is_tuple(Tuple) and is_list(Typ
 addValue(Name, Date, Type, Value, Monitor) when is_list(Name) and is_list(Type) and is_number(Value) and is_record(Monitor, monitor)->
   case calendar:valid_date(Date) and not valueExists({Name, Date, Type}, Monitor) of
     true -> #monitor{stations = Monitor#monitor.stations, data = maps:put({Name, Date, Type}, Value, Monitor#monitor.data)};
-    _ -> Monitor
+    _ -> {error, "Value already exists"}
   end.
 
 
@@ -62,7 +63,11 @@ removeValue(Tuple, Date, Type, Monitor) when is_tuple(Tuple) and is_list(Type) a
   removeValue(Name, Date, Type, Monitor);
 
 removeValue(Name, Date, Type, Monitor) when is_list(Name) and is_list(Type) and is_record(Monitor, monitor) ->
-  #monitor{stations = (Monitor#monitor.stations), data = maps:remove({Name, Date, Type}, Monitor#monitor.data)}.
+  case valueExists({Name, Date, Type}, Monitor) of
+    true -> #monitor{stations = (Monitor#monitor.stations), data = maps:remove({Name, Date, Type}, Monitor#monitor.data)};
+    _ -> {error, "Value does not exist"}
+  end.
+
 
 
 %% pobiera wartosc pomiaru
@@ -73,7 +78,7 @@ getOneValue(Tuple, Date, Type, Monitor) when is_tuple(Tuple) and is_list(Type) a
 getOneValue(Name, Date, Type, Monitor) when is_list(Name) and is_list(Type) and is_record(Monitor, monitor) ->
   case valueExists({Name, Date, Type}, Monitor) of
     true -> maps:get({Name, Date, Type}, Monitor#monitor.data);
-    _ -> null
+    _ -> {error, "Value does not exist"}
   end.
 
 

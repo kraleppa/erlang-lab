@@ -102,7 +102,7 @@ getDailyMean(Type, Date, Monitor) when is_list(Type) ->
 getDailyOverLimit(Type, Date, Limit, Monitor) when is_list(Type) and is_number(Limit) ->
   case calendar:valid_date(Date) of
     true ->
-      F = fun({_, _, KeyType}, Value) -> (Value > Limit) and (KeyType == Type) end,
+      F = fun({_, KeyDate, KeyType}, Value) -> (Value > Limit) and (KeyType == Type) and (Date == KeyDate) end,
       Map = maps:filter(F, (Monitor#monitor.data)),
       maps:size(Map);
     false -> null

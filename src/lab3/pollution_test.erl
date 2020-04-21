@@ -13,11 +13,11 @@
 -record(monitor, {stations, data}).
 
 createMonitor_test() ->
-  ?assert(pollution:createMonitor() ==  #monitor{stations = #{}, data = #{}}).
+  ?assertMatch(#monitor{stations = #{}, data = #{}}, pollution:createMonitor()).
 
 addStation_test() ->
   M1 = pollution:addStation("Kraków", {20, 20}, pollution:createMonitor()),
-  ?assert(M1 == #monitor{stations = #{"Kraków" => {20, 20}}, data = #{}}),
+  ?assert(#monitor{stations = #{"Kraków" => {20, 20}}, data = #{}} == M1),
 
   ?assert(pollution:addStation("Kraków", {21, 50}, M1) == {error,"Station already exists"}),
   ?assert(pollution:addStation("Lubiąż", {20, 20}, M1) == {error, "Station already exists"}).

@@ -32,29 +32,56 @@ loop(Monitor) ->
       OperationResult = addStation(Name, Cords, Monitor),
       case OperationResult of
         {error, Text} -> PID ! {error, Text}, loop(Monitor);
-        _ -> PID ! {reply, ok}, loop(OperationResult)
+        {monitor, _, _} -> PID ! {reply, ok}, loop(OperationResult);
+        _ -> PID ! {error, "Pattern Matching error"}, loop(Monitor)
       end;
 
     {addValue, PID, {Station, Date, Type, Value}} ->
       OperationResult = addValue(Station, Date, Type, Value, Monitor),
       case OperationResult of
         {error, Text} -> PID ! {error, Text}, loop(Monitor);
-        _ -> PID ! {reply, ok}, loop(OperationResult)
+        {monitor, _, _} -> PID ! {reply, ok}, loop(OperationResult);
+        _ -> PID ! {error, "Pattern Matching error"}, loop(Monitor)
       end;
 
     {removeValue, PID, {Station, Date, Type}} ->
       OperationResult = removeValue(Station, Date, Type, Monitor),
       case OperationResult of
         {error, Text} -> PID ! {error, Text}, loop(Monitor);
-        _ -> PID ! {reply, ok}, loop(OperationResult)
+        {monitor, _, _} -> PID ! {reply, ok}, loop(OperationResult);
+        _ -> PID ! {error, "Pattern Matching error"}, loop(Monitor)
       end;
 
-    {show, PID} -> PID ! {reply, Monitor}, loop(Monitor);
-    {getOneValue, PID, {Station, Date, Type}} -> PID ! {reply, getOneValue(Station, Date, Type, Monitor)}, loop(Monitor);
-    {getStationMean, PID, {Station, Type}} -> PID !  {reply, getStationMean(Station, Type, Monitor)}, loop(Monitor);
-    {getDailyMean, PID, {Type, Date}} -> PID ! {reply, getDailyMean(Type, Date, Monitor)}, loop(Monitor);
-    {getDailyOverLimit, PID, {Type, Date, Limit}} -> PID ! {reply, getDailyOverLimit(Type, Date, Limit, Monitor)}, loop(Monitor);
+    {getOneValue, PID, {Station, Date, Type}} ->
+      OperationResult = getOneValue(Station, Date, Type, Monitor),
+      case OperationResult of
+        {error, Text} -> PID ! {error, Text}, loop(Monitor);
+        _-> PID ! {reply, OperationResult}, loop(Monitor)
+      end;
+
+    {getStationMean, PID, {Station, Type}} -> %PID !  {reply, getStationMean(Station, Type, Monitor)}, loop(Monitor);
+      OperationResult = getStationMean(Station, Type, Monitor),
+      case OperationResult of
+        {error, Text} -> PID ! {error, Text}, loop(Monitor);
+        _ -> PID ! {reply, OperationResult}, loop(Monitor)
+      end;
+
+    {getDailyMean, PID, {Type, Date}} -> %PID ! {reply, getDailyMean(Type, Date, Monitor)}, loop(Monitor);
+      OperationResult = getDailyMean(Type, Date, Monitor),
+      case OperationResult of
+        {error, Text} -> PID ! {error, Text}, loop(Monitor);
+        _ -> PID ! {reply, OperationResult}, loop(Monitor)
+      end;
+
+    {getDailyOverLimit, PID, {Type, Date, Limit}} -> %PID ! {reply, getDailyOverLimit(Type, Date, Limit, Monitor)}, loop(Monitor);
+      OperationResult = getDailyOverLimit(Type, Date, Limit, Monitor),
+      case OperationResult of
+        {error, Text} -> PID ! {error, Text}, loop(Monitor);
+        _ -> PID ! {reply, OperationResult}, loop(Monitor)
+      end;
+
     {getYearlyMean, PID, {Type, Year}} -> PID ! {reply, getYearlyMean(Type, Year, Monitor)}, loop(Monitor);
+    {show, PID} -> PID ! {reply, Monitor}, loop(Monitor);
     {stop, PID} -> PID ! {reply, ok};
     _ -> loop(Monitor)
   end.
